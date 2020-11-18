@@ -1,6 +1,6 @@
 use raytracelib::camera::Camera;
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
-use raytracelib::material::{Sphere, Lambertian, Hit};
+use raytracelib::material::{Sphere, Lambertian, Hit, Metal};
 
 use rand::{Rng, SeedableRng};
 use rand::rngs::SmallRng;
@@ -111,7 +111,7 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, 0.0, -1.0),
             radius: 0.5,
-			material: Lambertian { albedo: Color::new(0.5, 0.5, 0.5) },
+			material: Metal { albedo: Color::new(0.5, 0.1, 0.5) },
         },
         // Sphere {
         //     center: Point3::new(0.7, 0.0, -1.5),
@@ -122,14 +122,14 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, -100.5, -1.0),
             radius: 100.0,
-			material: Lambertian { albedo: Color::new(0.5, 0.5, 0.5) },
+			material: Metal { albedo: Color::new(0.5, 0.5, 0.5) },
         },
     ];
 
     // Camera:
     let camera = Camera::new();
 
-    let samples_per_pixel = 1000;
+    let samples_per_pixel = 40;
     let max_depth = 20;
 
     let mut rng = SmallRng::from_entropy();

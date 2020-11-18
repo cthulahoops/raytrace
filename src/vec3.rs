@@ -43,6 +43,10 @@ impl Vec3 {
         const DELTA : f64 = 1e-8;
         self.x.abs() < DELTA && self.y.abs() < DELTA && self.z.abs() < DELTA
     }
+
+    pub fn reflect(vec: Self, normal: Self) -> Self {
+        vec - 2.0 * Vec3::dot(vec, normal) * normal
+    }
 }
 
 impl Add for Vec3 {

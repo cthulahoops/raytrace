@@ -75,14 +75,29 @@ impl Lambertian {
 	}
 }
 
+#[derive(Copy, Clone)]
+pub struct Metal {
+	pub albedo: Color
+}
+
+impl Metal {
+	pub fn scatter<R: Rng>(&self, _rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+		let reflected = Vec3::reflect(ray_in.direction.unit_vector(), hit.normal);
+		Some((
+			self.albedo,
+			Ray::new(hit.point, reflected)
+		))
+	}
+}
+
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: Lambertian
+    pub material: Metal
 }
 
 impl Sphere {
-    pub fn new(center : Point3, radius: f64, material: Lambertian) -> Self {
+    pub fn new(center : Point3, radius: f64, material: Metal) -> Self {
         Sphere { center, radius, material }
     }
 }
