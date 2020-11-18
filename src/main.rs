@@ -1,5 +1,5 @@
 use raytracelib::camera::Camera;
-use raytracelib::material::{Hit, Lambertian, Material, Metal, Scatter, Sphere};
+use raytracelib::material::{Hit, Diffuse, Material, Metal, Scatter, Sphere};
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
 
 use rand::rngs::SmallRng;
@@ -118,21 +118,21 @@ fn main() {
         Sphere {
             center: Point3::new(1.0, 0.0, -1.0),
             radius: 0.5,
-            material: Material::Lambertian(Lambertian {
+            material: Material::Diffuse(Diffuse {
                 albedo: Color::new(0.8, 0.2, 0.2),
             }),
         },
         Sphere {
             center: Point3::new(-1.0, 0.0, -1.0),
             radius: 0.5,
-            material: Material::Lambertian(Lambertian {
+            material: Material::Diffuse(Diffuse {
                 albedo: Color::new(0.8, 0.2, 0.2),
             }),
         },
         Sphere {
             center: Point3::new(0.0, 0.0, 2.0),
             radius: 0.5,
-            material: Material::Lambertian(Lambertian {
+            material: Material::Diffuse(Diffuse {
                 albedo: Color::new(0.2, 0.8, 0.2),
             }),
         },

@@ -62,11 +62,11 @@ pub trait Scatter {
 }
 
 #[derive(Copy, Clone)]
-pub struct Lambertian {
+pub struct Diffuse {
     pub albedo: Color,
 }
 
-impl Scatter for Lambertian {
+impl Scatter for Diffuse {
     fn scatter<R: Rng>(&self, rng: &mut R, _ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
         let mut scatter_direction = hit.normal + random_unit_vector(rng);
 
@@ -91,14 +91,14 @@ impl Scatter for Metal {
 }
 
 pub enum Material {
-    Lambertian(Lambertian),
+    Diffuse(Diffuse),
     Metal(Metal),
 }
 
 impl Scatter for Material {
     fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
         match self {
-            Material::Lambertian(lambertian) => lambertian.scatter(rng, ray_in, hit),
+            Material::Diffuse(diffuse) => diffuse.scatter(rng, ray_in, hit),
             Material::Metal(metal) => metal.scatter(rng, ray_in, hit),
         }
     }
