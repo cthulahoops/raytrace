@@ -40,7 +40,7 @@ impl Hit {
     fn new(root: f64, ray: &Ray, sphere: &Sphere) -> Self {
         let point = ray.at(root);
 
-        let outward_normal = (point - sphere.center)/ sphere.radius;
+        let outward_normal = (point - sphere.center) / sphere.radius;
         let face = if Vec3::dot(ray.direction, outward_normal) < 0.0 {
             Face::Front
         } else {
@@ -97,8 +97,44 @@ fn hit_world(world: &World, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
     best_so_far
 }
 
+struct Camera {
+    origin: Point3,
+    lower_left_corner: Point3,
+    horizontal: Vec3,
+    vertical: Vec3,
+}
+
+impl Camera {
+    pub fn new() -> Self {
+        let aspect_ratio = 16.9 / 9.0;
+        let viewport_height = 2.0;
+        let viewport_width = aspect_ratio * viewport_height;
+        let focal_length = 1.0;
+
+        let origin = Point3::new(0.0, 0.0, 0.0);
+        let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
+        let vertical = Vec3::new(0.0, viewport_height, 0.0);
+        let lower_left_corner =
+            origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+
+        Self {
+            origin,
+            lower_left_corner,
+            horizontal,
+            vertical,
+        }
+    }
+
+    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
+        Ray::new(
+            self.origin,
+            self.lower_left_corner + u * self.horizontal + v * self.vertical,
+        )
+    }
+}
+
 fn ray_color(ray: &Ray, world: &World) -> Color {
-    if let Some(hit) = hit_world(world, ray, 0.5, INFINITY) {
+    if let Some(hit) = hit_world(world, ray, 0.0, INFINITY) {
         return 0.5 * (hit.normal + Color::new(1.0, 1.0, 1.0));
         //        return Color::new(1.0, 0.0, 0.0);
     }
@@ -136,16 +172,7 @@ fn main() {
     ];
 
     // Camera:
-    let viewport_height = 2.0;
-    let viewport_width = ASPECT_RATIO * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Point3::new(0.0, 0.0, 0.0);
-    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewport_height, 0.0);
-
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+    let camera = Camera::new();
 
     // Render
     println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -155,7 +182,7 @@ fn main() {
         for i in 0..IMAGE_WIDTH {
             let u = i as f64 / (IMAGE_WIDTH - 1) as f64;
             let v = j as f64 / (IMAGE_HEIGHT - 1) as f64;
-            let ray = Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
+            let ray = camera.get_ray(u, v);
             let pixel_color = ray_color(&ray, &world);
 
             write_color(pixel_color)
