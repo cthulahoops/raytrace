@@ -1,11 +1,11 @@
-mod vec3;
+use raytracelib::camera::Camera;
+use raytracelib::vec3::{Color, Point3, Ray, Vec3};
 
 use rand::{Rng, SeedableRng};
 use rand::rngs::SmallRng;
 
 use std::f64::consts::PI;
 use std::f64::INFINITY;
-use vec3::{Color, Point3, Ray, Vec3};
 
 fn degrees_to_radians(degrees: f64) -> f64 {
     return degrees * PI / 180.0;
