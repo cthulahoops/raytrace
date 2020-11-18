@@ -1,5 +1,8 @@
 mod vec3;
 
+use rand::{Rng, SeedableRng};
+use rand::rngs::SmallRng;
+
 use std::f64::consts::PI;
 use std::f64::INFINITY;
 use vec3::{Color, Point3, Ray, Vec3};
@@ -188,18 +191,26 @@ fn main() {
     // Camera:
     let camera = Camera::new();
 
+    let samples_per_pixel = 100;
+
+    let mut rng = SmallRng::from_entropy();
+
     // Render
     println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
     for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\rScanline: {}", j);
 
         for i in 0..IMAGE_WIDTH {
-            let u = i as f64 / (IMAGE_WIDTH - 1) as f64;
-            let v = j as f64 / (IMAGE_HEIGHT - 1) as f64;
-            let ray = camera.get_ray(u, v);
-            let pixel_color = ray_color(&ray, &world);
+            let mut pixel_color =Vec3::new(0.0, 0.0, 0.0);
 
-            write_color(pixel_color)
+            for _ in 0..samples_per_pixel {
+                let u = (i as f64 + rng.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
+                let v = (j as f64 + rng.gen::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
+                let ray = camera.get_ray(u, v);
+                pixel_color = pixel_color + ray_color(&ray, &world);
+            }
+
+            write_color(pixel_color / samples_per_pixel as f64)
         }
     }
 }
