@@ -28,9 +28,9 @@ fn to_8bit_color(c: f64) -> i32 {
 fn write_color(color: Color) {
     println!(
         "{} {} {}",
-        to_8bit_color(color.x),
-        to_8bit_color(color.y),
-        to_8bit_color(color.z)
+        to_8bit_color(color.x.sqrt()),
+        to_8bit_color(color.y.sqrt()),
+        to_8bit_color(color.z.sqrt())
     )
 }
 
