@@ -8,12 +8,26 @@ fn degrees_to_radians(degrees: f64) -> f64 {
     return degrees * PI / 180.0;
 }
 
+fn clamp(x: f64, min: f64, max: f64) -> f64 {
+    if x < min {
+        return min;
+    };
+    if x > max {
+        return max;
+    };
+    x
+}
+
+fn to_8bit_color(c: f64) -> i32 {
+    (256.0 * clamp(c, 0.0, 0.999)) as i32
+}
+
 fn write_color(color: Color) {
     println!(
         "{} {} {}",
-        (255.999 * color.x) as i32,
-        (255.999 * color.y) as i32,
-        (255.999 * color.z) as i32
+        to_8bit_color(color.x),
+        to_8bit_color(color.y),
+        to_8bit_color(color.z)
     )
 }
 
