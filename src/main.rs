@@ -1,5 +1,6 @@
 use raytracelib::camera::Camera;
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
+use raytracelib::material::{Sphere, Lambertian, Hit};
 
 use rand::{Rng, SeedableRng};
 use rand::rngs::SmallRng;
@@ -34,64 +35,7 @@ fn write_color(color: Color) {
     )
 }
 
-struct Sphere {
-    center: Point3,
-    radius: f64,
-}
-
-fn random_vector<T: Rng>(rng: &mut T) -> Vec3 {
-    Vec3::new(2.0 * rng.gen::<f64>() - 1.0, 2.0 * rng.gen::<f64>() - 1.0, rng.gen::<f64>() - 1.0)
-}
-
-fn random_in_unit_sphere<T: Rng>(rng: &mut T) -> Vec3 {
-    loop {
-        let p = random_vector(rng);
-        if p.length_squared() > 1.0 {
-            continue;
-        }
-        return p
-    }
-}
-
-fn random_unit_vector<T: Rng>(rng: &mut T) -> Vec3 {
-    random_in_unit_sphere(rng).unit_vector()
-}
-
 type World = Vec<Sphere>;
-
-enum Face {
-    Front,
-    Back,
-}
-
-struct Hit {
-    point: Point3,
-    normal: Vec3,
-    t: f64,
-    face: Face,
-}
-
-impl Hit {
-    fn new(root: f64, ray: &Ray, sphere: &Sphere) -> Self {
-        let point = ray.at(root);
-
-        let outward_normal = (point - sphere.center) / sphere.radius;
-        let face = if Vec3::dot(ray.direction, outward_normal) < 0.0 {
-            Face::Front
-        } else {
-            Face::Back
-        };
-        Hit {
-            t: root,
-            point: point,
-            normal: match face {
-                Face::Front => outward_normal,
-                Face::Back => -1.0 * outward_normal,
-            },
-            face: face,
-        }
-    }
-}
 
 fn hit_sphere(sphere: &Sphere, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
     let center = sphere.center;
@@ -120,13 +64,13 @@ fn hit_sphere(sphere: &Sphere, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit>
     Some(Hit::new(root, ray, sphere))
 }
 
-fn hit_world(world: &World, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+fn hit_world<'a>(world: &'a World, ray: &Ray, t_min: f64, t_max: f64) -> Option<(Hit, &'a Sphere)> {
     let mut closest_so_far = t_max;
-    let mut best_so_far: Option<Hit> = None;
+    let mut best_so_far: Option<(Hit, &Sphere)> = None;
     for sphere in world {
         if let Some(hit) = hit_sphere(&sphere, ray, t_min, closest_so_far) {
             closest_so_far = hit.t;
-            best_so_far = Some(hit);
+            best_so_far = Some((hit, sphere));
         }
     }
     best_so_far
@@ -137,10 +81,15 @@ fn ray_color<R: Rng>(rng: &mut R, ray: &Ray, world: &World, max_depth: i32) -> C
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    if let Some(hit) = hit_world(world, ray, 0.001, INFINITY) {
-        let target = hit.point + hit.normal + random_unit_vector(rng);
-        return 0.5 * ray_color(rng, &Ray::new(hit.point, target - hit.point), world, max_depth - 1);
-        //        return Color::new(1.0, 0.0, 0.0);
+    if let Some((hit, sphere)) = hit_world(world, ray, 0.001, INFINITY) {
+		match sphere.material.scatter(rng, ray, &hit) {
+			Some((color, ray_out)) => {
+				return color * ray_color(rng, &ray_out, world, max_depth - 1)
+			}
+			None => {
+				return Color::new(0.0, 0.0, 0.0);
+			}
+		}
     }
     let unit_direction = ray.direction.unit_vector();
     let t = 0.5 * (unit_direction.y + 1.0);
@@ -162,6 +111,7 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, 0.0, -1.0),
             radius: 0.5,
+			material: Lambertian { albedo: Color::new(0.5, 0.5, 0.5) },
         },
         // Sphere {
         //     center: Point3::new(0.7, 0.0, -1.5),
@@ -172,6 +122,7 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, -100.5, -1.0),
             radius: 100.0,
+			material: Lambertian { albedo: Color::new(0.5, 0.5, 0.5) },
         },
     ];
 
