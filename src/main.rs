@@ -74,7 +74,8 @@ fn hit_sphere(sphere: &Sphere, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit>
     let sqrtd = discriminant.sqrt();
 
     let mut root = (-half_b - sqrtd) / a;
-    if root < t_min || root > t_min {
+
+    if root < t_min || root > t_max {
         root = (-half_b + sqrtd) / a;
         if root < t_min || root > t_max {
             return None;
@@ -97,7 +98,7 @@ fn hit_world(world: &World, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
 }
 
 fn ray_color(ray: &Ray, world: &World) -> Color {
-    if let Some(hit) = hit_world(world, ray, 0.0, INFINITY) {
+    if let Some(hit) = hit_world(world, ray, 0.5, INFINITY) {
         return 0.5 * (hit.normal + Color::new(1.0, 1.0, 1.0));
         //        return Color::new(1.0, 0.0, 0.0);
     }
@@ -114,17 +115,23 @@ fn main() {
 
     // World:
     let world = vec![
+        // Sphere {
+        //     center: Point3::new(-0.7, 0.0, -1.5),
+        //     radius: 0.5,
+        // },
         Sphere {
-            center: Point3::new(0.0, 0.0, -1.5),
+            center: Point3::new(0.0, 0.0, -1.0),
             radius: 0.5,
         },
+        // Sphere {
+        //     center: Point3::new(0.7, 0.0, -1.5),
+        //     radius: 0.5,
+        // },
+
+        // Ground
         Sphere {
-            center: Point3::new(-1.0, 0.0, -1.5),
-            radius: 0.5,
-        },
-        Sphere {
-            center: Point3::new(1.0, 0.0, -1.5),
-            radius: 0.5,
+            center: Point3::new(0.0, -100.5, -1.0),
+            radius: 100.0,
         },
     ];
 
