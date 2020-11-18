@@ -40,7 +40,7 @@ impl Vec3 {
     }
 
     pub fn near_zero(&self) -> bool {
-        const DELTA : f64 = 1e-8;
+        const DELTA: f64 = 1e-8;
         self.x.abs() < DELTA && self.y.abs() < DELTA && self.z.abs() < DELTA
     }
 

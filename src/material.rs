@@ -1,9 +1,12 @@
-use super::vec3::{Ray, Color, Vec3, Point3};
+use super::vec3::{Color, Point3, Ray, Vec3};
 use rand::Rng;
 
-
 fn random_vector<T: Rng>(rng: &mut T) -> Vec3 {
-    Vec3::new(2.0 * rng.gen::<f64>() - 1.0, 2.0 * rng.gen::<f64>() - 1.0, rng.gen::<f64>() - 1.0)
+    Vec3::new(
+        2.0 * rng.gen::<f64>() - 1.0,
+        2.0 * rng.gen::<f64>() - 1.0,
+        rng.gen::<f64>() - 1.0,
+    )
 }
 
 fn random_in_unit_sphere<T: Rng>(rng: &mut T) -> Vec3 {
@@ -12,7 +15,7 @@ fn random_in_unit_sphere<T: Rng>(rng: &mut T) -> Vec3 {
         if p.length_squared() > 1.0 {
             continue;
         }
-        return p
+        return p;
     }
 }
 
@@ -54,50 +57,65 @@ impl Hit {
     }
 }
 
-// pub trait Material {
-//     fn scatter(&self, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)>;
-// }
+pub trait Scatter {
+    fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)>;
+}
 
 #[derive(Copy, Clone)]
 pub struct Lambertian {
-	pub albedo: Color
+    pub albedo: Color,
 }
 
-impl Lambertian {
-	pub fn scatter<R: Rng>(&self, rng: &mut R, _ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
-		let mut scatter_direction = hit.normal + random_unit_vector(rng);
+impl Scatter for Lambertian {
+    fn scatter<R: Rng>(&self, rng: &mut R, _ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+        let mut scatter_direction = hit.normal + random_unit_vector(rng);
 
-		if scatter_direction.near_zero() {
-			scatter_direction = hit.normal
-		}
-	
-		Some((self.albedo, Ray::new( hit.point, scatter_direction )))
-	}
+        if scatter_direction.near_zero() {
+            scatter_direction = hit.normal
+        }
+
+        Some((self.albedo, Ray::new(hit.point, scatter_direction)))
+    }
 }
 
 #[derive(Copy, Clone)]
 pub struct Metal {
-	pub albedo: Color
+    pub albedo: Color,
 }
 
-impl Metal {
-	pub fn scatter<R: Rng>(&self, _rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
-		let reflected = Vec3::reflect(ray_in.direction.unit_vector(), hit.normal);
-		Some((
-			self.albedo,
-			Ray::new(hit.point, reflected)
-		))
-	}
+impl Scatter for Metal {
+    fn scatter<R: Rng>(&self, _rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+        let reflected = Vec3::reflect(ray_in.direction.unit_vector(), hit.normal);
+        Some((self.albedo, Ray::new(hit.point, reflected)))
+    }
+}
+
+pub enum Material {
+    Lambertian(Lambertian),
+    Metal(Metal),
+}
+
+impl Scatter for Material {
+    fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+        match self {
+            Material::Lambertian(lambertian) => lambertian.scatter(rng, ray_in, hit),
+            Material::Metal(metal) => metal.scatter(rng, ray_in, hit),
+        }
+    }
 }
 
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: Metal
+    pub material: Material,
 }
 
 impl Sphere {
-    pub fn new(center : Point3, radius: f64, material: Metal) -> Self {
-        Sphere { center, radius, material }
+    pub fn new(center: Point3, radius: f64, material: Material) -> Self {
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 }

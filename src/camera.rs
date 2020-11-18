@@ -1,4 +1,4 @@
-use super::vec3::{Vec3, Point3, Ray};
+use super::vec3::{Point3, Ray, Vec3};
 
 pub struct Camera {
     origin: Point3,
@@ -35,4 +35,3 @@ impl Camera {
         )
     }
 }
-

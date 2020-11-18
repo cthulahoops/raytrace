@@ -1,9 +1,9 @@
 use raytracelib::camera::Camera;
+use raytracelib::material::{Hit, Lambertian, Material, Metal, Scatter, Sphere};
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
-use raytracelib::material::{Sphere, Lambertian, Hit, Metal};
 
-use rand::{Rng, SeedableRng};
 use rand::rngs::SmallRng;
+use rand::{Rng, SeedableRng};
 
 use std::f64::consts::PI;
 use std::f64::INFINITY;
@@ -82,14 +82,14 @@ fn ray_color<R: Rng>(rng: &mut R, ray: &Ray, world: &World, max_depth: i32) -> C
     }
 
     if let Some((hit, sphere)) = hit_world(world, ray, 0.001, INFINITY) {
-		match sphere.material.scatter(rng, ray, &hit) {
-			Some((color, ray_out)) => {
-				return color * ray_color(rng, &ray_out, world, max_depth - 1)
-			}
-			None => {
-				return Color::new(0.0, 0.0, 0.0);
-			}
-		}
+        match sphere.material.scatter(rng, ray, &hit) {
+            Some((color, ray_out)) => {
+                return color * ray_color(rng, &ray_out, world, max_depth - 1)
+            }
+            None => {
+                return Color::new(0.0, 0.0, 0.0);
+            }
+        }
     }
     let unit_direction = ray.direction.unit_vector();
     let t = 0.5 * (unit_direction.y + 1.0);
@@ -111,7 +111,30 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, 0.0, -1.0),
             radius: 0.5,
-			material: Metal { albedo: Color::new(0.5, 0.1, 0.5) },
+            material: Material::Metal(Metal {
+                albedo: Color::new(0.5, 0.1, 0.5),
+            }),
+        },
+        Sphere {
+            center: Point3::new(1.0, 0.0, -1.0),
+            radius: 0.5,
+            material: Material::Lambertian(Lambertian {
+                albedo: Color::new(0.8, 0.2, 0.2),
+            }),
+        },
+        Sphere {
+            center: Point3::new(-1.0, 0.0, -1.0),
+            radius: 0.5,
+            material: Material::Lambertian(Lambertian {
+                albedo: Color::new(0.8, 0.2, 0.2),
+            }),
+        },
+        Sphere {
+            center: Point3::new(0.0, 0.0, 2.0),
+            radius: 0.5,
+            material: Material::Lambertian(Lambertian {
+                albedo: Color::new(0.2, 0.8, 0.2),
+            }),
         },
         // Sphere {
         //     center: Point3::new(0.7, 0.0, -1.5),
@@ -122,14 +145,16 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, -100.5, -1.0),
             radius: 100.0,
-			material: Metal { albedo: Color::new(0.5, 0.5, 0.5) },
+            material: Material::Metal(Metal {
+                albedo: Color::new(0.5, 0.5, 0.5),
+            }),
         },
     ];
 
     // Camera:
     let camera = Camera::new();
 
-    let samples_per_pixel = 40;
+    let samples_per_pixel = 400;
     let max_depth = 20;
 
     let mut rng = SmallRng::from_entropy();
@@ -140,7 +165,7 @@ fn main() {
         eprint!("\rScanline: {} ", j);
 
         for i in 0..IMAGE_WIDTH {
-            let mut pixel_color =Vec3::new(0.0, 0.0, 0.0);
+            let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
 
             for _ in 0..samples_per_pixel {
                 let u = (i as f64 + rng.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
