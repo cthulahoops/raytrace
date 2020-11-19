@@ -1,3 +1,5 @@
+use std::env;
+
 use raytracelib::camera::Camera;
 use raytracelib::material::{Hit, Diffuse, Material, Metal, Scatter, Sphere};
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
@@ -97,6 +99,9 @@ fn ray_color<R: Rng>(rng: &mut R, ray: &Ray, world: &World, max_depth: i32) -> C
 }
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    let samples_per_pixel: i64 = args[1].parse::<i64>().unwrap();
+
     // Image:
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: i64 = 400;
@@ -154,7 +159,6 @@ fn main() {
     // Camera:
     let camera = Camera::new();
 
-    let samples_per_pixel = 400;
     let max_depth = 20;
 
     let mut rng = SmallRng::from_entropy();
