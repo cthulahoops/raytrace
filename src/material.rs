@@ -81,12 +81,19 @@ impl Scatter for Diffuse {
 #[derive(Copy, Clone)]
 pub struct Metal {
     pub albedo: Color,
+    pub fuzz: f64,
 }
 
 impl Scatter for Metal {
-    fn scatter<R: Rng>(&self, _rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
-        let reflected = Vec3::reflect(ray_in.direction.unit_vector(), hit.normal);
-        Some((self.albedo, Ray::new(hit.point, reflected)))
+    fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+        let reflected = ray_in.direction.unit_vector().reflect(hit.normal);
+        Some((
+            self.albedo,
+            Ray::new(
+                hit.point,
+                reflected + self.fuzz * random_in_unit_sphere(rng),
+            ),
+        ))
     }
 }
 

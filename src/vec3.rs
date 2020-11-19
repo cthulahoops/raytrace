@@ -44,8 +44,8 @@ impl Vec3 {
         self.x.abs() < DELTA && self.y.abs() < DELTA && self.z.abs() < DELTA
     }
 
-    pub fn reflect(vec: Self, normal: Self) -> Self {
-        vec - 2.0 * Vec3::dot(vec, normal) * normal
+    pub fn reflect(self, normal: Self) -> Self {
+        self - 2.0 * Vec3::dot(self, normal) * normal
     }
 }
 
