@@ -1,7 +1,7 @@
 use std::env;
 
 use raytracelib::camera::Camera;
-use raytracelib::material::{Dielectric, Diffuse, Hit, Material, Metal, Scatter, Sphere};
+use raytracelib::material::{Dielectric, Diffuse, Hit, Metal, Sphere};
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
 
 use rand::rngs::SmallRng;
@@ -78,7 +78,7 @@ fn hit_world<'a>(world: &'a World, ray: &Ray, t_min: f64, t_max: f64) -> Option<
     best_so_far
 }
 
-fn ray_color<R: Rng>(rng: &mut R, ray: &Ray, world: &World, max_depth: i32) -> Color {
+fn ray_color(rng: &mut SmallRng, ray: &Ray, world: &World, max_depth: i32) -> Color {
     if max_depth <= 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
@@ -107,9 +107,18 @@ fn main() {
     const IMAGE_WIDTH: i64 = 400;
     const IMAGE_HEIGHT: i64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i64;
 
-    let glass = Material::Dielectric(Dielectric {
+    let glass = Box::new(Dielectric {
         refractive_index: 1.52,
     });
+
+    let purple_metal = Box::new(Metal {
+                albedo: Color::new(0.5, 0.1, 0.5),
+                fuzz: 0.0,
+            });
+
+    let pink_stone = Box::new(Diffuse {
+                albedo: Color::new(0.8, 0.2, 0.2),
+            });
 
     // World:
     let world = vec![
@@ -120,17 +129,12 @@ fn main() {
         Sphere {
             center: Point3::new(0.5, 0.0, -1.0),
             radius: 0.5,
-            material: Material::Metal(Metal {
-                albedo: Color::new(0.5, 0.1, 0.5),
-                fuzz: 0.0,
-            }),
+            material: purple_metal,
         },
         Sphere {
             center: Point3::new(-0.5, 0.0, -1.0),
             radius: 0.5,
-            material: Material::Diffuse(Diffuse {
-                albedo: Color::new(0.8, 0.2, 0.2),
-            }),
+            material: pink_stone.clone(),
         },
         Sphere {
             center: Point3::new(0.0, -0.25, -0.5),
@@ -140,15 +144,12 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, -0.25, -0.5),
             radius: 0.2,
-            material: Material::Diffuse(Diffuse {
-                albedo: Color::new(0.8, 0.2, 0.2),
-            }),
-
+            material: pink_stone,
         },
         Sphere {
             center: Point3::new(0.0, 0.0, 2.0),
             radius: 0.5,
-            material: Material::Diffuse(Diffuse {
+            material: Box::new(Diffuse {
                 albedo: Color::new(0.2, 0.8, 0.2),
             }),
         },
@@ -161,7 +162,7 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, -10000.5, -1.0),
             radius: 10000.0,
-            material: Material::Metal(Metal {
+            material: Box::new(Metal {
                 albedo: Color::new(0.5, 0.5, 0.5),
                 fuzz: 0.3,
             }),

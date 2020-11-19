@@ -1,5 +1,5 @@
 use super::vec3::{Color, Point3, Ray, Vec3};
-use rand::Rng;
+use rand::{rngs::SmallRng, Rng};
 
 fn random_vector<T: Rng>(rng: &mut T) -> Vec3 {
     Vec3::new(
@@ -58,7 +58,7 @@ impl Hit {
 }
 
 pub trait Scatter {
-    fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)>;
+    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)>;
 }
 
 #[derive(Copy, Clone)]
@@ -67,7 +67,7 @@ pub struct Diffuse {
 }
 
 impl Scatter for Diffuse {
-    fn scatter<R: Rng>(&self, rng: &mut R, _ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+    fn scatter(&self, rng: &mut SmallRng, _ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
         let mut scatter_direction = hit.normal + random_unit_vector(rng);
 
         if scatter_direction.near_zero() {
@@ -85,7 +85,7 @@ pub struct Metal {
 }
 
 impl Scatter for Metal {
-    fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
         let reflected = ray_in.direction.unit_vector().reflect(hit.normal);
         Some((
             self.albedo,
@@ -111,7 +111,7 @@ impl Dielectric {
 }
 
 impl Scatter for Dielectric {
-    fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
         let attenuation = Color::new(1.0, 1.0, 1.0);
         let refraction_ratio = match hit.face {
             Face::Front => 1.0 / self.refractive_index,
@@ -139,31 +139,14 @@ impl Scatter for Dielectric {
     }
 }
 
-#[derive(Copy, Clone)]
-pub enum Material {
-    Diffuse(Diffuse),
-    Metal(Metal),
-    Dielectric(Dielectric),
-}
-
-impl Scatter for Material {
-    fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
-        match self {
-            Material::Diffuse(diffuse) => diffuse.scatter(rng, ray_in, hit),
-            Material::Metal(metal) => metal.scatter(rng, ray_in, hit),
-            Material::Dielectric(dielectric) => dielectric.scatter(rng, ray_in, hit),
-        }
-    }
-}
-
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: Material,
+    pub material: std::boxed::Box<dyn Scatter>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, material: Material) -> Self {
+    pub fn new(center: Point3, radius: f64, material: Box<dyn Scatter>) -> Self {
         Sphere {
             center,
             radius,
