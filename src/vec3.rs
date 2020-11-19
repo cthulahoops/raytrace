@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -46,6 +46,22 @@ impl Vec3 {
 
     pub fn reflect(self, normal: Self) -> Self {
         self - 2.0 * Vec3::dot(self, normal) * normal
+    }
+
+    pub fn refract(self, normal: Self, refraction_ratio: f64) -> Self {
+        let cos_theta = self.cos_theta(normal);
+        let r_out_perp = refraction_ratio * (self + cos_theta * normal);
+        let r_out_parallel = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * normal;
+        r_out_perp + r_out_parallel
+    }
+
+    pub fn cos_theta(self, rhs: Vec3) -> f64 {
+        f64::min(Vec3::dot(-self, rhs), 1.0)
+    }
+
+    pub fn sin_theta(self, rhs: Vec3) -> f64 {
+        let cos_theta = self.cos_theta(rhs);
+        (1.0 - cos_theta * cos_theta).sqrt()
     }
 }
 
@@ -110,6 +126,18 @@ impl Div<f64> for Vec3 {
 
     fn div(self, rhs: f64) -> Self {
         self * (1.0 / rhs)
+    }
+}
+
+impl Neg for Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Self::Output {
+        Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
     }
 }
 

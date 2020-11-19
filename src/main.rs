@@ -1,18 +1,18 @@
 use std::env;
 
 use raytracelib::camera::Camera;
-use raytracelib::material::{Hit, Diffuse, Material, Metal, Scatter, Sphere};
+use raytracelib::material::{Dielectric, Diffuse, Hit, Material, Metal, Scatter, Sphere};
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
 
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
-use std::f64::consts::PI;
+// use std::f64::consts::PI;
 use std::f64::INFINITY;
 
-fn degrees_to_radians(degrees: f64) -> f64 {
-    return degrees * PI / 180.0;
-}
+// fn degrees_to_radians(degrees: f64) -> f64 {
+//     return degrees * PI / 180.0;
+// }
 
 fn clamp(x: f64, min: f64, max: f64) -> f64 {
     if x < min {
@@ -107,6 +107,10 @@ fn main() {
     const IMAGE_WIDTH: i64 = 400;
     const IMAGE_HEIGHT: i64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i64;
 
+    let glass = Material::Dielectric(Dielectric {
+        refractive_index: 1.52,
+    });
+
     // World:
     let world = vec![
         // Sphere {
@@ -114,25 +118,32 @@ fn main() {
         //     radius: 0.5,
         // },
         Sphere {
-            center: Point3::new(0.0, 0.0, -1.0),
+            center: Point3::new(0.5, 0.0, -1.0),
             radius: 0.5,
             material: Material::Metal(Metal {
                 albedo: Color::new(0.5, 0.1, 0.5),
+                fuzz: 0.0,
             }),
         },
         Sphere {
-            center: Point3::new(1.0, 0.0, -1.0),
+            center: Point3::new(-0.5, 0.0, -1.0),
             radius: 0.5,
             material: Material::Diffuse(Diffuse {
                 albedo: Color::new(0.8, 0.2, 0.2),
             }),
         },
         Sphere {
-            center: Point3::new(-1.0, 0.0, -1.0),
-            radius: 0.5,
+            center: Point3::new(0.0, -0.25, -0.5),
+            radius: 0.25,
+            material: glass,
+        },
+        Sphere {
+            center: Point3::new(0.0, -0.25, -0.5),
+            radius: 0.2,
             material: Material::Diffuse(Diffuse {
                 albedo: Color::new(0.8, 0.2, 0.2),
             }),
+
         },
         Sphere {
             center: Point3::new(0.0, 0.0, 2.0),
@@ -148,10 +159,11 @@ fn main() {
 
         // Ground
         Sphere {
-            center: Point3::new(0.0, -100.5, -1.0),
-            radius: 100.0,
+            center: Point3::new(0.0, -10000.5, -1.0),
+            radius: 10000.0,
             material: Material::Metal(Metal {
                 albedo: Color::new(0.5, 0.5, 0.5),
+                fuzz: 0.3,
             }),
         },
     ];

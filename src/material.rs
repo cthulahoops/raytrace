@@ -97,9 +97,53 @@ impl Scatter for Metal {
     }
 }
 
+#[derive(Copy, Clone)]
+pub struct Dielectric {
+    pub refractive_index: f64,
+}
+
+impl Dielectric {
+    fn reflectance(&self, cos_theta: f64) -> f64 {
+        let r0 = (1.0 - self.refractive_index) / (1.0 + self.refractive_index);
+        let r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cos_theta).powf(5.0)
+    }
+}
+
+impl Scatter for Dielectric {
+    fn scatter<R: Rng>(&self, rng: &mut R, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+        let attenuation = Color::new(1.0, 1.0, 1.0);
+        let refraction_ratio = match hit.face {
+            Face::Front => 1.0 / self.refractive_index,
+            Face::Back => self.refractive_index,
+        };
+
+        let unit_direction = ray_in.direction.unit_vector();
+
+        let cos_theta = unit_direction.cos_theta(hit.normal);
+        let sin_theta = unit_direction.sin_theta(hit.normal);
+
+        let can_refract = refraction_ratio * sin_theta <= 1.0;
+        // let can_refract = true;
+
+        let reflectance = self.reflectance(cos_theta);
+
+        let output_direction = if can_refract && reflectance <= rng.gen::<f64>()
+        {
+            unit_direction.refract(hit.normal, refraction_ratio)
+        } else {
+            unit_direction.reflect(hit.normal)
+        };
+
+        Some((attenuation, Ray::new(hit.point, output_direction)))
+    }
+}
+
+#[derive(Copy, Clone)]
 pub enum Material {
     Diffuse(Diffuse),
     Metal(Metal),
+    Dielectric(Dielectric),
 }
 
 impl Scatter for Material {
@@ -107,6 +151,7 @@ impl Scatter for Material {
         match self {
             Material::Diffuse(diffuse) => diffuse.scatter(rng, ray_in, hit),
             Material::Metal(metal) => metal.scatter(rng, ray_in, hit),
+            Material::Dielectric(dielectric) => dielectric.scatter(rng, ray_in, hit),
         }
     }
 }
