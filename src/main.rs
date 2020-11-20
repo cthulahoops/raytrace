@@ -1,8 +1,9 @@
 use std::env;
 
 use raytracelib::camera::Camera;
-use raytracelib::material::{Dielectric, Diffuse, Hit, Metal, Sphere};
+use raytracelib::material::{Dielectric, Diffuse, Metal};
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
+use raytracelib::world::{Sphere, World};
 
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -37,53 +38,12 @@ fn write_color(color: Color) {
     )
 }
 
-type World = Vec<Sphere>;
-
-fn hit_sphere(sphere: &Sphere, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
-    let center = sphere.center;
-    let radius = sphere.radius;
-
-    let oc = ray.origin - center;
-    let a = ray.direction.length_squared();
-    let half_b = Vec3::dot(oc, ray.direction);
-    let c = oc.length_squared() - radius * radius;
-
-    let discriminant = half_b * half_b - a * c;
-    if discriminant < 0.0 {
-        return None;
-    }
-    let sqrtd = discriminant.sqrt();
-
-    let mut root = (-half_b - sqrtd) / a;
-
-    if root < t_min || root > t_max {
-        root = (-half_b + sqrtd) / a;
-        if root < t_min || root > t_max {
-            return None;
-        }
-    }
-
-    Some(Hit::new(root, ray, sphere))
-}
-
-fn hit_world<'a>(world: &'a World, ray: &Ray, t_min: f64, t_max: f64) -> Option<(Hit, &'a Sphere)> {
-    let mut closest_so_far = t_max;
-    let mut best_so_far: Option<(Hit, &Sphere)> = None;
-    for sphere in world {
-        if let Some(hit) = hit_sphere(&sphere, ray, t_min, closest_so_far) {
-            closest_so_far = hit.t;
-            best_so_far = Some((hit, sphere));
-        }
-    }
-    best_so_far
-}
-
 fn ray_color(rng: &mut SmallRng, ray: &Ray, world: &World, max_depth: i32) -> Color {
     if max_depth <= 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    if let Some((hit, sphere)) = hit_world(world, ray, 0.001, INFINITY) {
+    if let Some((hit, sphere)) = world.hit(ray, 0.001, INFINITY) {
         match sphere.material.scatter(rng, ray, &hit) {
             Some((color, ray_out)) => {
                 return color * ray_color(rng, &ray_out, world, max_depth - 1)
@@ -112,16 +72,16 @@ fn main() {
     });
 
     let purple_metal = Box::new(Metal {
-                albedo: Color::new(0.5, 0.1, 0.5),
-                fuzz: 0.0,
-            });
+        albedo: Color::new(0.5, 0.1, 0.5),
+        fuzz: 0.0,
+    });
 
     let pink_stone = Box::new(Diffuse {
-                albedo: Color::new(0.8, 0.2, 0.2),
-            });
+        albedo: Color::new(0.8, 0.2, 0.2),
+    });
 
     // World:
-    let world = vec![
+    let world = World::new(vec![
         // Sphere {
         //     center: Point3::new(-0.7, 0.0, -1.5),
         //     radius: 0.5,
@@ -135,6 +95,11 @@ fn main() {
             center: Point3::new(-0.5, 0.0, -1.0),
             radius: 0.5,
             material: pink_stone.clone(),
+        },
+        Sphere {
+            center: Point3::new(1.0, -0.25, -0.5),
+            radius: 0.25,
+            material: glass.clone(),
         },
         Sphere {
             center: Point3::new(0.0, -0.25, -0.5),
@@ -167,7 +132,7 @@ fn main() {
                 fuzz: 0.3,
             }),
         },
-    ];
+    ]);
 
     // Camera:
     let camera = Camera::new();
