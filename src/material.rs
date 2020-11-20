@@ -1,28 +1,7 @@
 use super::hittable::{Face, Hit};
-use super::vec3::{Color, Ray, Vec3};
+use super::vec3::{Color, Ray};
 use rand::{rngs::SmallRng, Rng};
-
-fn random_vector<T: Rng>(rng: &mut T) -> Vec3 {
-    Vec3::new(
-        2.0 * rng.gen::<f64>() - 1.0,
-        2.0 * rng.gen::<f64>() - 1.0,
-        2.0 * rng.gen::<f64>() - 1.0,
-    )
-}
-
-fn random_in_unit_sphere<T: Rng>(rng: &mut T) -> Vec3 {
-    loop {
-        let p = random_vector(rng);
-        if p.length_squared() > 1.0 {
-            continue;
-        }
-        return p;
-    }
-}
-
-fn random_unit_vector<T: Rng>(rng: &mut T) -> Vec3 {
-    random_in_unit_sphere(rng).unit_vector()
-}
+use super::random::{random_unit_vector, random_in_unit_sphere};
 
 pub trait Scatter {
     fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)>;

@@ -1,20 +1,7 @@
 use super::vec3::{Point3, Ray, Vec3};
+use rand::Rng;
 use std::f64::consts::PI;
-use rand::{rngs::SmallRng, Rng};
-
-fn random_in_unit_disk<T: Rng>(rng: &mut T) -> Vec3 {
-    loop {
-        let p = Vec3::new(
-            2.0 * rng.gen::<f64>() - 1.0,
-            2.0 * rng.gen::<f64>() - 1.0,
-            0.0
-        );
-        if p.length_squared() > 1.0 {
-            continue;
-        }
-        return p;
-    }
-}
+use super::random::random_in_unit_disk;
 
 pub struct Camera {
     origin: Point3,
@@ -23,7 +10,7 @@ pub struct Camera {
     vertical: Vec3,
     u: Vec3,
     v: Vec3,
-    lens_radius: f64
+    lens_radius: f64,
 }
 
 pub struct Degrees(pub f64);
@@ -42,7 +29,7 @@ impl Camera {
         vfov: Degrees,
         aspect_ratio: f64,
         aperture: f64,
-        focus_distance: f64
+        focus_distance: f64,
     ) -> Self {
         let vfov = vfov.to_radians();
         let h = (vfov / 2.0).tan();
@@ -72,7 +59,7 @@ impl Camera {
         }
     }
 
-    pub fn get_ray(&self, rng: &mut SmallRng, s: f64, t: f64) -> Ray {
+    pub fn get_ray<R: Rng>(&self, rng: &mut R, s: f64, t: f64) -> Ray {
         let rd = self.lens_radius * random_in_unit_disk(rng);
         let offset = self.u * rd.x + self.v * rd.y;
         Ray::new(
