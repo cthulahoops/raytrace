@@ -136,12 +136,19 @@ fn main() {
     ]);
 
     // Camera:
+    let look_from = Point3::new(2.0, 2.0, 2.0);
+    let look_at = Point3::new(0.0, 0.0, 1.0);
+    let dist_to_focus = (look_from - look_at).length();
+    let aperture = 0.4;
+
     let camera = Camera::new(
-        Point3::new(2.0, 2.0, 2.0),
-        Point3::new(0.0, 0.0, 1.0),
+        look_from,
+        look_at,
         Vec3::new(0.0, 1.0, 0.0),
         Degrees(60.0),
         16.0 / 9.0,
+        aperture,
+        dist_to_focus
     );
 
     let max_depth = 20;
@@ -159,7 +166,7 @@ fn main() {
             for _ in 0..samples_per_pixel {
                 let u = (i as f64 + rng.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
                 let v = (j as f64 + rng.gen::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
-                let ray = camera.get_ray(u, v);
+                let ray = camera.get_ray(&mut rng, u, v);
                 pixel_color = pixel_color + ray_color(&mut rng, &ray, &world, max_depth);
             }
 
