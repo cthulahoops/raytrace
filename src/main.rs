@@ -49,8 +49,15 @@ fn ray_color(rng: &mut SmallRng, ray: &Ray, world: &World, max_depth: i32) -> Co
         }
     }
     let unit_direction = ray.direction.unit_vector();
-    let t = 0.5 * (unit_direction.y + 1.0);
-    return (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
+    let light_theta = Vec3::dot(unit_direction, Vec3::new(-0.3, -1.0, 0.7).unit_vector());
+    if light_theta <= -0.9 {
+        Color::new(1.0, 1.0, 1.0)
+    }
+    else {
+        Color::new(0.0, 0.0, 0.2)
+    }
+    // let t = 0.5 * (unit_direction.y + 1.0);
+    // return (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
 }
 
 fn main() {
@@ -123,7 +130,7 @@ fn main() {
             center: Point3::new(0.0, -10000.5, -1.0),
             radius: 10000.0,
             material: Box::new(Diffuse {
-                albedo: Color::new(0.5, 0.5, 0.5),
+                albedo: Color::new(0.8, 0.8, 0.8),
             }),
         },
     ]);
@@ -133,7 +140,7 @@ fn main() {
         Point3::new(2.0, 2.0, 2.0),
         Point3::new(0.0, 0.0, 1.0),
         Vec3::new(0.0, 1.0, 0.0),
-        Degrees(70.0),
+        Degrees(60.0),
         16.0 / 9.0,
     );
 
