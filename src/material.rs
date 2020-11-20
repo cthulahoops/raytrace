@@ -6,7 +6,7 @@ fn random_vector<T: Rng>(rng: &mut T) -> Vec3 {
     Vec3::new(
         2.0 * rng.gen::<f64>() - 1.0,
         2.0 * rng.gen::<f64>() - 1.0,
-        rng.gen::<f64>() - 1.0,
+        2.0 * rng.gen::<f64>() - 1.0,
     )
 }
 
