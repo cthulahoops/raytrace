@@ -1,6 +1,6 @@
 use std::env;
 
-use raytracelib::camera::Camera;
+use raytracelib::camera::{Camera, Degrees};
 use raytracelib::material::{Dielectric, Diffuse, Metal};
 use raytracelib::vec3::{Color, Point3, Ray, Vec3};
 use raytracelib::world::{Sphere, World};
@@ -8,12 +8,7 @@ use raytracelib::world::{Sphere, World};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
-// use std::f64::consts::PI;
 use std::f64::INFINITY;
-
-// fn degrees_to_radians(degrees: f64) -> f64 {
-//     return degrees * PI / 180.0;
-// }
 
 fn clamp(x: f64, min: f64, max: f64) -> f64 {
     if x < min {
@@ -127,15 +122,20 @@ fn main() {
         Sphere {
             center: Point3::new(0.0, -10000.5, -1.0),
             radius: 10000.0,
-            material: Box::new(Metal {
+            material: Box::new(Diffuse {
                 albedo: Color::new(0.5, 0.5, 0.5),
-                fuzz: 0.3,
             }),
         },
     ]);
 
     // Camera:
-    let camera = Camera::new();
+    let camera = Camera::new(
+        Point3::new(2.0, 2.0, 2.0),
+        Point3::new(0.0, 0.0, 1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        Degrees(70.0),
+        16.0 / 9.0,
+    );
 
     let max_depth = 20;
 
@@ -147,7 +147,7 @@ fn main() {
         eprint!("\rScanline: {} ", j);
 
         for i in 0..IMAGE_WIDTH {
-            let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
+            let mut pixel_color = Color::new(0.0, 0.0, 0.0);
 
             for _ in 0..samples_per_pixel {
                 let u = (i as f64 + rng.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
