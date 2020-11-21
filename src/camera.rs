@@ -1,15 +1,15 @@
-use super::vec3::{Point3, Ray, Vec3};
+use super::random::random_in_unit_disk;
+use super::vec3::{CrossProduct, Point3, Ray, UnitVec3, Vec3};
 use rand::Rng;
 use std::f64::consts::PI;
-use super::random::random_in_unit_disk;
 
 pub struct Camera {
     origin: Point3,
     lower_left_corner: Point3,
     horizontal: Vec3,
     vertical: Vec3,
-    u: Vec3,
-    v: Vec3,
+    u: UnitVec3,
+    v: UnitVec3,
     lens_radius: f64,
 }
 
@@ -37,8 +37,8 @@ impl Camera {
         let viewport_width = aspect_ratio * viewport_height;
 
         let w = (look_from - look_at).unit_vector();
-        let u = Vec3::cross(&vup, &w).unit_vector();
-        let v = Vec3::cross(&w, &u);
+        let u = vup.cross(w).unit_vector();
+        let v = w.cross(u);
 
         let origin = look_from;
         let horizontal = focus_distance * viewport_width * u;
@@ -64,7 +64,10 @@ impl Camera {
         let offset = self.u * rd.x + self.v * rd.y;
         Ray::new(
             self.origin + offset,
-            self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
+            (self.lower_left_corner + s * self.horizontal + t * self.vertical
+                - self.origin
+                - offset)
+                .unit_vector(),
         )
     }
 }

@@ -1,5 +1,5 @@
-use rand::{Rng};
-use super::vec3::{Vec3};
+use super::vec3::{UnitVec3, Vec3};
+use rand::Rng;
 
 pub fn random_in_unit_disk<T: Rng>(rng: &mut T) -> Vec3 {
     loop {
@@ -25,7 +25,7 @@ pub fn random_in_unit_sphere<T: Rng>(rng: &mut T) -> Vec3 {
     }
 }
 
-pub fn random_unit_vector<T: Rng>(rng: &mut T) -> Vec3 {
+pub fn random_unit_vector<T: Rng>(rng: &mut T) -> UnitVec3 {
     random_in_unit_sphere(rng).unit_vector()
 }
 
@@ -41,7 +41,7 @@ pub fn random_vec3_range<R: Rng>(rng: &mut R, min: f64, max: f64) -> Vec3 {
     Vec3::new(
         random_f64_range(rng, min, max),
         random_f64_range(rng, min, max),
-        random_f64_range(rng, min, max)
+        random_f64_range(rng, min, max),
     )
 }
 

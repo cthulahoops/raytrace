@@ -1,7 +1,7 @@
 use super::hittable::{Face, Hit};
-use super::vec3::{Color, Ray};
+use super::random::{random_in_unit_sphere, random_unit_vector};
+use super::vec3::{Color, Ray, Vec3};
 use rand::{rngs::SmallRng, Rng};
-use super::random::{random_unit_vector, random_in_unit_sphere};
 
 pub trait Scatter {
     fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)>;
@@ -14,13 +14,13 @@ pub struct Diffuse {
 
 impl Scatter for Diffuse {
     fn scatter(&self, rng: &mut SmallRng, _ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
-        let mut scatter_direction = hit.normal + random_unit_vector(rng);
+        let mut scatter_direction: Vec3 = hit.normal + random_unit_vector(rng);
 
         if scatter_direction.near_zero() {
-            scatter_direction = hit.normal
+            scatter_direction = hit.normal.into()
         }
 
-        Some((self.albedo, Ray::new(hit.point, scatter_direction)))
+        Some((self.albedo, Ray::new(hit.point, scatter_direction.into())))
     }
 }
 
@@ -32,12 +32,12 @@ pub struct Metal {
 
 impl Scatter for Metal {
     fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
-        let reflected = ray_in.direction.unit_vector().reflect(hit.normal);
+        let reflected = ray_in.direction.reflect(hit.normal);
         Some((
             self.albedo,
             Ray::new(
                 hit.point,
-                reflected + self.fuzz * random_in_unit_sphere(rng),
+                (reflected + self.fuzz * random_in_unit_sphere(rng)).unit_vector(),
             ),
         ))
     }
@@ -64,9 +64,9 @@ impl Scatter for Dielectric {
             Face::Back => self.refractive_index,
         };
 
-        let unit_direction = ray_in.direction.unit_vector();
+        let unit_direction = ray_in.direction;
 
-        let cos_theta = unit_direction.cos_theta(hit.normal);
+        let cos_theta = unit_direction.cos_theta(-hit.normal);
         let sin_theta = unit_direction.sin_theta(hit.normal);
 
         let can_refract = refraction_ratio * sin_theta <= 1.0;
@@ -80,6 +80,9 @@ impl Scatter for Dielectric {
             unit_direction.reflect(hit.normal)
         };
 
-        Some((attenuation, Ray::new(hit.point, output_direction)))
+        Some((
+            attenuation,
+            Ray::new(hit.point, output_direction.unit_vector()),
+        ))
     }
 }

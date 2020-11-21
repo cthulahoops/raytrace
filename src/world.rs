@@ -1,6 +1,6 @@
 use super::hittable::{Hit, Hittable};
 use super::material::Scatter;
-use super::vec3::{Point3, Ray, Vec3};
+use super::vec3::{Point3, Ray, UnitVec3, Vec3};
 
 pub struct Sphere {
     pub center: Point3,
@@ -17,8 +17,8 @@ impl Sphere {
         }
     }
 
-    fn outward_normal(&self, point: Point3) -> Vec3 {
-        (point - self.center) / self.radius
+    fn outward_normal(&self, point: Point3) -> UnitVec3 {
+        (point - self.center).unit_vector()
     }
 }
 
@@ -28,20 +28,19 @@ impl Hittable for Sphere {
         let radius = self.radius;
 
         let oc = ray.origin - center;
-        let a = ray.direction.length_squared();
-        let half_b = Vec3::dot(oc, ray.direction);
+        let half_b = Vec3::dot(oc, ray.direction.into());
         let c = oc.length_squared() - radius * radius;
 
-        let discriminant = half_b * half_b - a * c;
+        let discriminant = half_b * half_b - c;
         if discriminant < 0.0 {
             return None;
         }
         let sqrtd = discriminant.sqrt();
 
-        let mut root = (-half_b - sqrtd) / a;
+        let mut root = -half_b - sqrtd;
 
         if root < t_min || root > t_max {
-            root = (-half_b + sqrtd) / a;
+            root = -half_b + sqrtd;
             if root < t_min || root > t_max {
                 return None;
             }

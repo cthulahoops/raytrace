@@ -2,9 +2,9 @@ use std::env;
 
 use raytracelib::camera::{Camera, Degrees};
 use raytracelib::material::{Dielectric, Diffuse, Metal, Scatter};
-use raytracelib::vec3::{Color, Point3, Ray, Vec3};
+use raytracelib::random::{random_vec3, random_vec3_range};
+use raytracelib::vec3::{Color, Point3, Ray, UnitVec3, Vec3};
 use raytracelib::world::{Sphere, World};
-use raytracelib::random::{random_vec3_range, random_vec3};
 
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -20,7 +20,7 @@ fn clamp(x: f64, min: f64, max: f64) -> f64 {
     };
 
     if x >= min && x <= max {
-        return x
+        return x;
     }
     0.0
 }
@@ -53,71 +53,82 @@ fn ray_color(rng: &mut SmallRng, ray: &Ray, world: &World, max_depth: i32) -> Co
             }
         }
     }
-    let unit_direction = ray.direction.unit_vector();
-    let light_theta = Vec3::dot(unit_direction, Vec3::new(-0.3, -1.0, 0.7).unit_vector());
+    let light_theta = UnitVec3::cos_theta(ray.direction, Vec3::new(-0.3, -1.0, 0.7).unit_vector());
     if light_theta <= -0.9 {
         Color::new(1.0, 1.0, 1.0)
-    }
-    else {
+    } else {
         Color::new(0.0, 0.0, 0.2)
     }
-    // let t = 0.5 * (unit_direction.y + 1.0);
+    // let t = 0.5 * (ray.direction.y + 1.0);
     // return (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
 }
 
 fn random_scene<R: Rng>(rng: &mut R) -> World {
     let mut world = vec![];
 
-    let ground_material = Box::new(Diffuse{albedo: Color::new(0.5, 0.5, 0.5)});
-    world.push(Sphere{ center: Point3::new(0.0, -1000.0, 0.0), radius: 1000.0, material: ground_material});
-
+    let ground_material = Box::new(Diffuse {
+        albedo: Color::new(0.5, 0.5, 0.5),
+    });
+    world.push(Sphere {
+        center: Point3::new(0.0, -1000.0, 0.0),
+        radius: 1000.0,
+        material: ground_material,
+    });
 
     for a in -5..5 {
         for b in -5..5 {
-            let center = Point3::new(2.0 * a as f64 + 0.9 * rng.gen::<f64>(), 0.2, 2.0 * b as f64 + 0.9 * rng.gen::<f64>());
-            
+            let center = Point3::new(
+                2.0 * a as f64 + 0.9 * rng.gen::<f64>(),
+                0.2,
+                2.0 * b as f64 + 0.9 * rng.gen::<f64>(),
+            );
+
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let material : Box<dyn Scatter> = match rng.gen::<f64>() {
+                let material: Box<dyn Scatter> = match rng.gen::<f64>() {
                     x if x < 0.8 => {
                         let albedo = random_vec3(rng) * random_vec3(rng);
-                        Box::new(Diffuse{ albedo: albedo })
+                        Box::new(Diffuse { albedo: albedo })
                     }
                     x if x < 0.95 => {
                         let albedo = random_vec3_range(rng, 0.5, 1.0);
-                        let fuzz : f64 = rng.gen_range(0.0, 0.5);
-                        Box::new(Metal{ albedo, fuzz })
+                        let fuzz: f64 = rng.gen_range(0.0, 0.5);
+                        Box::new(Metal { albedo, fuzz })
                     }
-                    _ => { 
-                        Box::new(Dielectric{ refractive_index: 1.52 })
-                    }
+                    _ => Box::new(Dielectric {
+                        refractive_index: 1.52,
+                    }),
                 };
-                world.push(Sphere { center, radius: 0.2, material })
+                world.push(Sphere {
+                    center,
+                    radius: 0.2,
+                    material,
+                })
             }
         }
     }
 
-    world.push(
-        Sphere{
-            center: Point3::new(0.0, 1.0, 0.0),
-            radius: 1.0,
-            material: Box::new(Dielectric{refractive_index: 1.52})
-        }
-    );
-    world.push(
-        Sphere{
-            center: Point3::new(-4.0, 1.0, 0.0),
-            radius: 1.0,
-            material: Box::new(Diffuse{albedo: Color::new(0.4, 0.2, 0.1)})
-        },
-    );
-    world.push(
-        Sphere{
-            center: Point3::new(4.0, 1.0, 0.0),
-            radius: 1.0,
-            material: Box::new(Metal{albedo: Color::new(0.7,0.6,0.5), fuzz: 0.0})
-        },
-    );
-
+    world.push(Sphere {
+        center: Point3::new(0.0, 1.0, 0.0),
+        radius: 1.0,
+        material: Box::new(Dielectric {
+            refractive_index: 1.52,
+        }),
+    });
+    world.push(Sphere {
+        center: Point3::new(-4.0, 1.0, 0.0),
+        radius: 1.0,
+        material: Box::new(Diffuse {
+            albedo: Color::new(0.4, 0.2, 0.1),
+        }),
+    });
+    world.push(Sphere {
+        center: Point3::new(4.0, 1.0, 0.0),
+        radius: 1.0,
+        material: Box::new(Metal {
+            albedo: Color::new(0.7, 0.6, 0.5),
+            fuzz: 0.0,
+        }),
+    });
 
     World::new(world)
 }
@@ -148,11 +159,10 @@ fn main() {
         Degrees(20.0),
         16.0 / 9.0,
         aperture,
-        dist_to_focus
+        dist_to_focus,
     );
 
     let max_depth = 20;
-
 
     // Render
     println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
