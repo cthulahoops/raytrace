@@ -122,11 +122,11 @@ impl UnitVec3 {
     }
 
     pub fn cos_theta(self, rhs: Self) -> f64 {
-        f64::min(UnitVec3::dot(self, rhs), 1.0)
+        UnitVec3::dot(self, rhs)
     }
 
     pub fn sin_theta(self, rhs: UnitVec3) -> f64 {
-        let cos_theta = self.cos_theta(rhs);
+        let cos_theta = f64::min(self.cos_theta(rhs), 1.0);
         (1.0 - cos_theta * cos_theta).sqrt()
     }
 
