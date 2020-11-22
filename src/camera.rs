@@ -1,3 +1,4 @@
+use std::ops::Div;
 use super::random::random_in_unit_disk;
 use super::vec3::{CrossProduct, Point3, Ray, UnitVec3, Vec3};
 use rand::Rng;
@@ -13,11 +14,40 @@ pub struct Camera {
     lens_radius: f64,
 }
 
-pub struct Degrees(pub f64);
+#[derive(Copy, Clone, Add, Neg, Sub)]
+pub struct Angle{pub radians: f64}
 
-impl Degrees {
-    pub fn to_radians(&self) -> f64 {
-        &self.0 * PI / 180.0
+impl Angle {
+    pub fn from_degrees(degrees: f64) -> Self {
+        Angle{radians: degrees * PI / 180.0}
+    }
+
+    pub fn to_degrees(&self) -> f64 {
+        self.radians * 180.0 / PI
+    }
+
+    pub fn from_radians(radians: f64) -> Self {
+        Angle{radians: radians}
+    }
+
+    pub fn tan(&self) -> f64 {
+        self.radians.tan()
+    }
+
+    pub fn cos(&self) -> f64 {
+        self.radians.cos()
+    }
+
+    pub fn sin(&self) -> f64 {
+        self.radians.sin()
+    }
+}
+
+impl Div<f64> for Angle {
+    type Output = Angle;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Angle{ radians: self.radians / rhs }
     }
 }
 
@@ -26,12 +56,11 @@ impl Camera {
         look_from: Point3,
         look_at: Point3,
         vup: Vec3,
-        vfov: Degrees,
+        vfov: Angle,
         aspect_ratio: f64,
         aperture: f64,
         focus_distance: f64,
     ) -> Self {
-        let vfov = vfov.to_radians();
         let h = (vfov / 2.0).tan();
         let viewport_height = 2.0 * h;
         let viewport_width = aspect_ratio * viewport_height;

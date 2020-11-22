@@ -1,6 +1,6 @@
 use std::env;
 
-use raytracelib::camera::{Camera, Degrees};
+use raytracelib::camera::{Camera, Angle};
 use raytracelib::material::{Dielectric, Diffuse, Metal, Scatter};
 use raytracelib::random::{random_vec3, random_vec3_range};
 use raytracelib::vec3::{Color, Point3, Ray, UnitVec3, Vec3};
@@ -156,7 +156,7 @@ fn main() {
         look_from,
         look_at,
         Vec3::new(0.0, 1.0, 0.0),
-        Degrees(20.0),
+        Angle::from_degrees(20.0),
         16.0 / 9.0,
         aperture,
         dist_to_focus,

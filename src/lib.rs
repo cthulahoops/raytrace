@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate derive_more;
+
 pub mod camera;
 pub mod hittable;
 pub mod material;
