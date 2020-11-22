@@ -1,6 +1,6 @@
 use std::env;
 
-use raytracelib::camera::{Camera, Angle};
+use raytracelib::camera::{Angle, Camera};
 use raytracelib::material::{Dielectric, Diffuse, Metal, Scatter};
 use raytracelib::random::{random_vec3, random_vec3_range};
 use raytracelib::vec3::{Color, Point3, Ray, UnitVec3, Vec3};

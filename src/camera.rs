@@ -1,8 +1,8 @@
-use std::ops::Div;
 use super::random::random_in_unit_disk;
 use super::vec3::{CrossProduct, Point3, Ray, UnitVec3, Vec3};
 use rand::Rng;
 use std::f64::consts::PI;
+use std::ops::Div;
 
 pub struct Camera {
     origin: Point3,
@@ -15,11 +15,15 @@ pub struct Camera {
 }
 
 #[derive(Copy, Clone, Add, Neg, Sub)]
-pub struct Angle{pub radians: f64}
+pub struct Angle {
+    pub radians: f64,
+}
 
 impl Angle {
     pub fn from_degrees(degrees: f64) -> Self {
-        Angle{radians: degrees * PI / 180.0}
+        Angle {
+            radians: degrees * PI / 180.0,
+        }
     }
 
     pub fn to_degrees(&self) -> f64 {
@@ -27,7 +31,7 @@ impl Angle {
     }
 
     pub fn from_radians(radians: f64) -> Self {
-        Angle{radians: radians}
+        Angle { radians: radians }
     }
 
     pub fn tan(&self) -> f64 {
@@ -47,7 +51,9 @@ impl Div<f64> for Angle {
     type Output = Angle;
 
     fn div(self, rhs: f64) -> Self::Output {
-        Angle{ radians: self.radians / rhs }
+        Angle {
+            radians: self.radians / rhs,
+        }
     }
 }
 
