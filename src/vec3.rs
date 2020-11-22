@@ -1,6 +1,6 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, Mul, Sub};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Add, Sub, Neg, Mul, Div)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -37,42 +37,6 @@ impl Vec3 {
     }
 }
 
-impl Add for Vec3 {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
-        Vec3 {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-            z: self.z + rhs.z,
-        }
-    }
-}
-
-impl Sub for Vec3 {
-    type Output = Vec3;
-
-    fn sub(self, rhs: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-            z: self.z - rhs.z,
-        }
-    }
-}
-
-impl Mul<f64> for Vec3 {
-    type Output = Self;
-
-    fn mul(self, rhs: f64) -> Self {
-        Vec3 {
-            x: self.x * rhs,
-            y: self.y * rhs,
-            z: self.z * rhs,
-        }
-    }
-}
-
 impl Mul<Vec3> for f64 {
     type Output = Vec3;
 
@@ -93,27 +57,7 @@ impl Mul<Vec3> for Vec3 {
     }
 }
 
-impl Div<f64> for Vec3 {
-    type Output = Self;
-
-    fn div(self, rhs: f64) -> Self {
-        self * (1.0 / rhs)
-    }
-}
-
-impl Neg for Vec3 {
-    type Output = Vec3;
-
-    fn neg(self) -> Self::Output {
-        Vec3 {
-            x: -self.x,
-            y: -self.y,
-            z: -self.z,
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Neg)]
 pub struct UnitVec3(Vec3);
 
 impl UnitVec3 {
@@ -215,18 +159,6 @@ impl Mul<UnitVec3> for f64 {
 
     fn mul(self, rhs: UnitVec3) -> Self::Output {
         rhs * self
-    }
-}
-
-impl Neg for UnitVec3 {
-    type Output = UnitVec3;
-
-    fn neg(self) -> Self::Output {
-        UnitVec3(Vec3 {
-            x: -self.0.x,
-            y: -self.0.y,
-            z: -self.0.z,
-        })
     }
 }
 
