@@ -64,7 +64,77 @@ fn ray_color(rng: &mut SmallRng, ray: &Ray, world: &World, max_depth: i32) -> Co
     // return (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
 }
 
-fn random_scene<R: Rng>(rng: &mut R) -> World {
+fn simple_scene() -> World {
+    let glass = Box::new(Dielectric {
+        refractive_index: 1.52,
+    });
+
+    let purple_metal = Box::new(Metal {
+        albedo: Color::new(0.5, 0.1, 0.5),
+        fuzz: 0.0,
+    });
+
+    let pink_stone = Box::new(Diffuse {
+        albedo: Color::new(0.8, 0.2, 0.2),
+    });
+
+    let light_source = Box::new(Light {
+        color: Color::new(40.0, 40.0, 40.0),
+    });
+
+    // World:
+    World::new(vec![
+        // Sphere {
+        //     center: Point3::new(-0.7, 0.0, -1.5),
+        //     radius: 0.5,
+        // },
+        Sphere {
+            center: Point3::new(0.5, 0.0, -1.0),
+            radius: 0.5,
+            material: purple_metal,
+        },
+        Sphere {
+            center: Point3::new(-0.5, 0.0, -1.0),
+            radius: 0.5,
+            material: pink_stone.clone(),
+        },
+        Sphere {
+            center: Point3::new(1.0, -0.25, -0.5),
+            radius: 0.25,
+            material: glass.clone(),
+        },
+        Sphere {
+            center: Point3::new(0.0, -0.25, -0.5),
+            radius: 0.25,
+            material: glass,
+        },
+        Sphere {
+            center: Point3::new(0.0, -0.25, -0.5),
+            radius: 0.2,
+            material: pink_stone,
+        },
+        Sphere {
+            center: Point3::new(0.0, 0.0, 2.0),
+            radius: 0.5,
+            material: light_source,
+        },
+        // Sphere {
+        //     center: Point3::new(0.7, 0.0, -1.5),
+        //     radius: 0.5,
+        // },
+
+        // Ground
+        Sphere {
+            center: Point3::new(0.0, -10000.5, -1.0),
+            radius: 10000.0,
+            material: Box::new(Diffuse {
+                albedo: Color::new(0.8, 0.8, 0.8),
+            }),
+        },
+    ])
+}
+
+fn _random_scene<R: Rng>(rng: &mut R) -> World {
     let mut world = vec![];
 
     let ground_material = Box::new(Diffuse {
@@ -145,19 +215,19 @@ fn main() {
 
     let mut rng = SmallRng::from_entropy();
 
-    let world = random_scene(&mut rng);
+    let world = simple_scene();
     //
     // Camera:
-    let look_from = Point3::new(13.0, 2.0, 3.0);
-    let look_at = Point3::new(0.0, 0.0, 0.0);
-    let dist_to_focus = 10.0;
-    let aperture = 0.1;
+    let look_from = Point3::new(2.5, 2.5, 2.5);
+    let look_at = Point3::new(1.0, -0.25, -0.5);
+    let dist_to_focus = (look_from - look_at).length();
+    let aperture = 0.2;
 
     let camera = Camera::new(
         look_from,
         look_at,
         Vec3::new(0.0, 1.0, 0.0),
-        Angle::from_degrees(20.0),
+        Angle::from_degrees(15.0),
         16.0 / 9.0,
         aperture,
         dist_to_focus,
