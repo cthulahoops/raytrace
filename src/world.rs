@@ -1,19 +1,19 @@
 use super::hittable::{Hit, Hittable};
-use super::material::Scatter;
+use super::material::Material;
 use super::vec3::{Point3, Ray, UnitVec3, Vec3};
 
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: std::boxed::Box<dyn Scatter>,
+    pub material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, material: Box<dyn Scatter>) -> Self {
+    pub fn new(center: Point3, radius: f64, material: &Material) -> Self {
         Sphere {
             center,
             radius,
-            material,
+            material: material.clone(),
         }
     }
 

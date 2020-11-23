@@ -1,9 +1,9 @@
 use std::env;
 
 use raytracelib::camera::{Angle, Camera};
-use raytracelib::material::{Dielectric, Diffuse, Light, Metal, Scatter, ScatterResult};
+use raytracelib::material::{Dielectric, Diffuse, Light, Metal, Material, Scatter, ScatterResult};
 use raytracelib::random::{random_vec3, random_vec3_range};
-use raytracelib::vec3::{Color, Point3, Ray, UnitVec3, Vec3};
+use raytracelib::vec3::{Color, Point3, Ray, Vec3};
 use raytracelib::world::{Sphere, World};
 
 use rand::rngs::SmallRng;
@@ -65,20 +65,20 @@ fn ray_color(rng: &mut SmallRng, ray: &Ray, world: &World, max_depth: i32) -> Co
 }
 
 fn simple_scene() -> World {
-    let glass = Box::new(Dielectric {
+    let glass = Material::Dielectric(Dielectric {
         refractive_index: 1.52,
     });
 
-    let purple_metal = Box::new(Metal {
+    let purple_metal = Material::Metal(Metal {
         albedo: Color::new(0.5, 0.1, 0.5),
         fuzz: 0.0,
     });
 
-    let pink_stone = Box::new(Diffuse {
+    let pink_stone = Material::Diffuse(Diffuse {
         albedo: Color::new(0.8, 0.2, 0.2),
     });
 
-    let light_source = Box::new(Light {
+    let light_source = Material::Light(Light {
         color: Color::new(40.0, 40.0, 40.0),
     });
 
@@ -127,7 +127,7 @@ fn simple_scene() -> World {
         Sphere {
             center: Point3::new(0.0, -10000.5, -1.0),
             radius: 10000.0,
-            material: Box::new(Diffuse {
+            material: Material::Diffuse(Diffuse {
                 albedo: Color::new(0.8, 0.8, 0.8),
             }),
         },
@@ -137,7 +137,7 @@ fn simple_scene() -> World {
 fn _random_scene<R: Rng>(rng: &mut R) -> World {
     let mut world = vec![];
 
-    let ground_material = Box::new(Diffuse {
+    let ground_material = Material::Diffuse(Diffuse {
         albedo: Color::new(0.5, 0.5, 0.5),
     });
     world.push(Sphere {
@@ -155,17 +155,17 @@ fn _random_scene<R: Rng>(rng: &mut R) -> World {
             );
 
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let material: Box<dyn Scatter> = match rng.gen::<f64>() {
+                let material = match rng.gen::<f64>() {
                     x if x < 0.8 => {
                         let albedo = random_vec3(rng) * random_vec3(rng);
-                        Box::new(Diffuse { albedo: albedo })
+                        Material::Diffuse(Diffuse { albedo: albedo })
                     }
                     x if x < 0.95 => {
                         let albedo = random_vec3_range(rng, 0.5, 1.0);
                         let fuzz: f64 = rng.gen_range(0.0, 0.5);
-                        Box::new(Metal { albedo, fuzz })
+                        Material::Metal(Metal { albedo, fuzz })
                     }
-                    _ => Box::new(Dielectric {
+                    _ => Material::Dielectric(Dielectric {
                         refractive_index: 1.52,
                     }),
                 };
@@ -181,21 +181,21 @@ fn _random_scene<R: Rng>(rng: &mut R) -> World {
     world.push(Sphere {
         center: Point3::new(0.0, 1.0, 0.0),
         radius: 1.0,
-        material: Box::new(Dielectric {
+        material: Material::Dielectric(Dielectric {
             refractive_index: 1.52,
         }),
     });
     world.push(Sphere {
         center: Point3::new(-4.0, 1.0, 0.0),
         radius: 1.0,
-        material: Box::new(Diffuse {
+        material: Material::Diffuse(Diffuse {
             albedo: Color::new(0.4, 0.2, 0.1),
         }),
     });
     world.push(Sphere {
         center: Point3::new(4.0, 1.0, 0.0),
         radius: 1.0,
-        material: Box::new(Metal {
+        material: Material::Metal(Metal {
             albedo: Color::new(0.7, 0.6, 0.5),
             fuzz: 0.0,
         }),

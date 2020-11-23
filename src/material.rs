@@ -103,3 +103,22 @@ impl Scatter for Light {
         ScatterResult::Emit(self.color)
     }
 }
+
+#[derive(Copy, Clone)]
+pub enum Material {
+    Diffuse(Diffuse),
+    Metal(Metal),
+    Dielectric(Dielectric),
+    Light(Light)
+}
+
+impl Scatter for Material {
+    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> ScatterResult {
+        match &self {
+            Material::Diffuse(material) => material.scatter(rng, ray_in, hit),
+            Material::Metal(material) => material.scatter(rng, ray_in, hit),
+            Material::Dielectric(material) => material.scatter(rng, ray_in, hit),
+            Material::Light(material) => material.scatter(rng, ray_in, hit),
+        }
+    }
+}
