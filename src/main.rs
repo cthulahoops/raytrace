@@ -11,6 +11,8 @@ use rand::{Rng, SeedableRng};
 
 use std::f64::INFINITY;
 
+use rayon::prelude::*;
+
 fn clamp(x: f64, min: f64, max: f64) -> f64 {
     if x < min {
         return min;
@@ -204,16 +206,14 @@ fn _random_scene<R: Rng>(rng: &mut R) -> World {
     World::new(world)
 }
 
+// Image:
+const ASPECT_RATIO: f64 = 3.0 / 2.0;
+const IMAGE_WIDTH: i64 = 400;
+const IMAGE_HEIGHT: i64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i64;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let samples_per_pixel: i64 = args[1].parse::<i64>().unwrap();
-
-    // Image:
-    const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IMAGE_WIDTH: i64 = 400;
-    const IMAGE_HEIGHT: i64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i64;
-
-    let mut rng = SmallRng::from_entropy();
 
     let world = simple_scene();
     //
@@ -233,24 +233,39 @@ fn main() {
         dist_to_focus,
     );
 
-    let max_depth = 20;
-
     // Render
     println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
-    for j in (0..IMAGE_HEIGHT).rev() {
-        eprint!("\rScanline: {} ", j);
+    
+    let lines : Vec<i64> = (0..IMAGE_HEIGHT).rev().collect();
+    let lines : Vec<Vec<Color>> = lines.par_iter().map(|j| {
+        eprint!("\rRender scanline: {} ", j);
 
-        for i in 0..IMAGE_WIDTH {
-            let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+        render_line(*j, samples_per_pixel, &world, &camera)
+    }).collect();
 
-            for _ in 0..samples_per_pixel {
-                let u = (i as f64 + rng.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
-                let v = (j as f64 + rng.gen::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
-                let ray = camera.get_ray(&mut rng, u, v);
-                pixel_color = pixel_color + ray_color(&mut rng, &ray, &world, max_depth);
-            }
-
-            write_color(pixel_color / samples_per_pixel as f64)
+    for line in lines{
+        for pixel in line {
+            write_color(pixel);
         }
     }
+}
+
+fn render_line(j: i64, samples_per_pixel: i64, world: &World, camera: &Camera) -> Vec<Color> {
+    let mut rng = SmallRng::from_entropy();
+    let max_depth = 20;
+
+    let mut result = vec![];
+    for i in 0..IMAGE_WIDTH {
+        let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+
+        for _ in 0..samples_per_pixel {
+            let u = (i as f64 + rng.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
+            let v = (j as f64 + rng.gen::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
+            let ray = camera.get_ray(&mut rng, u, v);
+            pixel_color = pixel_color + ray_color(&mut rng, &ray, world, max_depth);
+        }
+
+        result.push(pixel_color / samples_per_pixel as f64)
+    }
+    result
 }

@@ -18,3 +18,4 @@ path = "src/main.rs"
 [dependencies]
 rand={ version = "0.7", features=["small_rng"]}
 derive_more = "0.13.0"
+rayon = "1.5"
