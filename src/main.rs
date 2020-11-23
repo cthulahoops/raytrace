@@ -1,7 +1,7 @@
 use std::env;
 
 use raytracelib::camera::{Angle, Camera};
-use raytracelib::material::{Dielectric, Diffuse, Metal, Scatter};
+use raytracelib::material::{Dielectric, Diffuse, Light, Metal, Scatter, ScatterResult};
 use raytracelib::random::{random_vec3, random_vec3_range};
 use raytracelib::vec3::{Color, Point3, Ray, UnitVec3, Vec3};
 use raytracelib::world::{Sphere, World};
@@ -45,20 +45,21 @@ fn ray_color(rng: &mut SmallRng, ray: &Ray, world: &World, max_depth: i32) -> Co
 
     if let Some((hit, sphere)) = world.hit(ray, 0.001, INFINITY) {
         match sphere.material.scatter(rng, ray, &hit) {
-            Some((color, ray_out)) => {
+            ScatterResult::Reflect(color, ray_out) => {
                 return color * ray_color(rng, &ray_out, world, max_depth - 1)
             }
-            None => {
+            ScatterResult::Absorb => {
                 return Color::new(0.0, 0.0, 0.0);
             }
+            ScatterResult::Emit(color) => return color,
         }
     }
-    let light_theta = UnitVec3::cos_theta(ray.direction, Vec3::new(-0.3, -1.0, 0.7).unit_vector());
-    if light_theta <= -0.9 {
-        Color::new(1.0, 1.0, 1.0)
-    } else {
-        Color::new(0.0, 0.0, 0.2)
-    }
+    // let light_theta = UnitVec3::cos_theta(ray.direction, Vec3::new(-0.3, -1.0, 0.7).unit_vector());
+    // if light_theta <= -0.95 {
+    //     Color::new(12.0, 12.0, 12.0)
+    // } else {
+    Color::new(0.1, 0.1, 0.15)
+    // }
     // let t = 0.5 * (ray.direction.y + 1.0);
     // return (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
 }

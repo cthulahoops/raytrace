@@ -3,8 +3,14 @@ use super::random::{random_in_unit_sphere, random_unit_vector};
 use super::vec3::{Color, Ray, Vec3};
 use rand::{rngs::SmallRng, Rng};
 
+pub enum ScatterResult {
+    Reflect(Color, Ray),
+    Emit(Color),
+    Absorb,
+}
+
 pub trait Scatter {
-    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)>;
+    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> ScatterResult;
 }
 
 #[derive(Copy, Clone)]
@@ -13,14 +19,14 @@ pub struct Diffuse {
 }
 
 impl Scatter for Diffuse {
-    fn scatter(&self, rng: &mut SmallRng, _ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+    fn scatter(&self, rng: &mut SmallRng, _ray_in: &Ray, hit: &Hit) -> ScatterResult {
         let mut scatter_direction: Vec3 = hit.normal + random_unit_vector(rng);
 
         if scatter_direction.near_zero() {
             scatter_direction = hit.normal.into()
         }
 
-        Some((self.albedo, Ray::new(hit.point, scatter_direction.into())))
+        ScatterResult::Reflect(self.albedo, Ray::new(hit.point, scatter_direction.into()))
     }
 }
 
@@ -31,15 +37,15 @@ pub struct Metal {
 }
 
 impl Scatter for Metal {
-    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> ScatterResult {
         let reflected = ray_in.direction.reflect(hit.normal);
-        Some((
+        ScatterResult::Reflect(
             self.albedo,
             Ray::new(
                 hit.point,
                 (reflected + self.fuzz * random_in_unit_sphere(rng)).unit_vector(),
             ),
-        ))
+        )
     }
 }
 
@@ -57,7 +63,7 @@ impl Dielectric {
 }
 
 impl Scatter for Dielectric {
-    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> Option<(Color, Ray)> {
+    fn scatter(&self, rng: &mut SmallRng, ray_in: &Ray, hit: &Hit) -> ScatterResult {
         let attenuation = Color::new(1.0, 1.0, 1.0);
         let refraction_ratio = match hit.face {
             Face::Front => 1.0 / self.refractive_index,
@@ -80,9 +86,20 @@ impl Scatter for Dielectric {
             unit_direction.reflect(hit.normal)
         };
 
-        Some((
+        ScatterResult::Reflect(
             attenuation,
             Ray::new(hit.point, output_direction.unit_vector()),
-        ))
+        )
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct Light {
+    pub color: Color,
+}
+
+impl Scatter for Light {
+    fn scatter(&self, _rng: &mut SmallRng, _ray_in: &Ray, _hit: &Hit) -> ScatterResult {
+        ScatterResult::Emit(self.color)
     }
 }
