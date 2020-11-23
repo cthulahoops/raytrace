@@ -1,4 +1,5 @@
 use std::ops::{Add, Mul, Sub};
+use std::iter::Sum;
 
 #[derive(Debug, Copy, Clone, Add, Sub, Neg, Mul, Div)]
 pub struct Vec3 {
@@ -159,6 +160,18 @@ impl Mul<UnitVec3> for f64 {
 
     fn mul(self, rhs: UnitVec3) -> Self::Output {
         rhs * self
+    }
+}
+
+impl Sum<Vec3> for Vec3 {
+    fn sum<I>(iter: I) -> Self
+        where I: Iterator<Item = Vec3> {
+
+        let mut result = Vec3::new(0.0, 0.0, 0.0);
+        for item in iter {
+            result = result + item;
+        }
+        result
     }
 }
 
